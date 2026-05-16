@@ -491,7 +491,146 @@
   /* =============================================
      RESPONSIVO
      ============================================= */
-  @media (max-width: 900px) {
+  
+  /* =============================================
+     PRESETS ADICIONAIS - The Voice e Trap Gospel
+     ============================================= */
+
+  /* 🎤 PRESET: THE VOICE / REALITY SHOW */
+  .theme-the-voice .yt-preview {
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0f0f1a 100%);
+      position: relative;
+      overflow: hidden;
+  }
+  
+  /* Barras de cores dos jurados nas bordas */
+  .theme-the-voice .yt-preview::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, 
+          #ff0000 0%, #ff0000 25%,      /* Vermelho - Ana */
+          #00ff00 25%, #00ff00 50%,      /* Verde - Lulu */
+          #0000ff 50%, #0000ff 75%,      /* Azul - Teló */
+          #ff00ff 75%, #ff00ff 100%       /* Magenta - Ivete */
+      );
+  }
+  
+  .theme-the-voice .thumb-title {
+      color: #ffffff;
+      font-family: 'Impact', 'Arial Black', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 
+          0 0 20px rgba(255, 0, 0, 0.5),
+          0 0 40px rgba(0, 255, 0, 0.3),
+          0 0 60px rgba(0, 0, 255, 0.2);
+  }
+  
+  .theme-the-voice .thumb-subtitle {
+      color: #ffcc00;
+      font-family: 'Impact', 'Arial Black', sans-serif;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(255, 204, 0, 0.6);
+  }
+
+  /* Círculos de jurados */
+  .theme-the-voice .jurado-circle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 0 0 10px currentColor;
+  }
+  
+  .theme-the-voice .jurado-sim { 
+      background: rgba(0, 255, 0, 0.2);
+      border-color: #00ff00;
+      color: #00ff00;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  }
+  
+  .theme-the-voice .jurado-nao { 
+      background: rgba(255, 0, 0, 0.2);
+      border-color: #ff0000;
+      color: #ff0000;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+  }
+
+  /* ⛪ PRESET: TRAP GOSPEL */
+  .theme-trap-gospel .yt-preview {
+      background: linear-gradient(135deg, #0f0f1f 0%, #1a0a3e 50%, #0a1a2e 100%);
+      position: relative;
+      overflow: hidden;
+  }
+  
+  /* Raios divinos em neon */
+  .theme-trap-gospel .yt-preview::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+          radial-gradient(circle at 20% 80%, rgba(0, 255, 128, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%);
+      animation: divine-glow 4s ease-in-out infinite alternate;
+  }
+  
+  @keyframes divine-glow {
+      from { opacity: 0.5; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.1); }
+  }
+  
+  .theme-trap-gospel .thumb-title {
+      color: #ffd700;
+      font-family: 'Impact', 'Arial Black', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 
+          0 0 10px rgba(255, 215, 0, 0.5),
+          0 0 30px rgba(255, 215, 0, 0.3),
+          0 0 60px rgba(0, 255, 128, 0.2);
+      position: relative;
+      z-index: 2;
+  }
+  
+  .theme-trap-gospel .thumb-subtitle {
+      color: #00ff88;
+      font-family: 'Verdana', sans-serif;
+      text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+      letter-spacing: 3px;
+      position: relative;
+      z-index: 2;
+  }
+  
+  /* Cruz neon */
+  .theme-trap-gospel .cross-neon {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 60px;
+      color: rgba(255, 215, 0, 0.3);
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      animation: pulse-cross 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-cross {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.1); }
+  }
+
+@media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
       .controls { 
           max-height: none; 
@@ -544,6 +683,12 @@
                 </button>
                 <button class="preset-btn" data-theme="theme-midnight-jazz" onclick="setTheme(this, 'theme-midnight-jazz')">
                     🎷 Midnight Jazz
+                </button>
+                <button class="preset-btn" data-theme="theme-the-voice" onclick="setTheme(this, 'theme-the-voice')">
+                    🎤 The Voice
+                </button>
+                <button class="preset-btn" data-theme="theme-trap-gospel" onclick="setTheme(this, 'theme-trap-gospel')">
+                    ⛪ Trap Gospel
                 </button>
             </div>
         </div>
@@ -754,7 +899,7 @@ function updateColorFromText() {
     updateCustomColor();
 }
 
-function updateCustomBackground() {
+function updateCustomBackground() }
     const color1 = document.getElementById('bgColor1').value;
     const color2 = document.getElementById('bgColor2').value;
     const preview = document.getElementById('previewContent');

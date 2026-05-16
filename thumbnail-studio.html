@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Thumbnail Studio - Editor de Thumbnails para YouTube</title>
+<style>
+  /* =============================================
+     SISTEMA DE DESIGN
+     ============================================= */
+  :root {
+      /* Cores base */
+      --bg-dark: #0a0a0f;
+      --bg-card: #15151e;
+      --bg-panel: #1e1e2e;
+      --surface: #2a2a3e;
+      --border: #3a3a5e;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0b0;
+      --text-muted: #6a6a7a;
+      --accent-cyan: #00f0ff;
+      --accent-pink: #ff00aa;
+      --accent-amber: #ffaa00;
+      --accent-lime: #aaff00;
+      --accent-violet: #aa55ff;
+      --success: #00ff88;
+      --danger: #ff3355;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+  }
+
+  /* =============================================
+     LAYOUT PRINCIPAL
+     ============================================= */
+  .app {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 100vh;
+  }
+
+  /* =============================================
+     PAINEL DE CONTROLES (ESQUERDA)
+     ============================================= */
+  .controls {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+  }
+
+  .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+  }
+
+  .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+  }
+
+  .logo h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+  }
+
+  .logo p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+  }
+
+  /* Seções de controle */
+  .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+  }
+
+  .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+  }
+
+  .control-label .count {
+      background: var(--surface);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+  }
+
+  /* Inputs */
+  input[type="text"],
+  input[type="color"],
+  select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      width: 100%;
+      transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus,
+  select:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+  }
+
+  input[type="color"] {
+      height: 40px;
+      padding: 4px;
+      cursor: pointer;
+  }
+
+  select { cursor: pointer; }
+  select option { background: var(--bg-panel); }
+
+  /* Botão principal */
+  .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      color: #000;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: auto;
+  }
+
+  .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.3);
+  }
+
+  .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+  }
+
+  .btn-secondary:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.05);
+  }
+
+  /* Range sliders */
+  input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 3px;
+      outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid var(--bg-card);
+  }
+
+  /* Grid de presets */
+  .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+  }
+
+  .preset-btn {
+      background: var(--surface);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 10px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+  }
+
+  .preset-btn:hover, .preset-btn.active {
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+      background: rgba(0, 240, 255, 0.1);
+  }
+
+  /* =============================================
+     ÁREA DE PRÉVIA (CENTRO)
+     ============================================= */
+  .preview-area {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+  }
+
+  .preview-header {
+      text-align: center;
+  }
+
+  .preview-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+  }
+
+  .preview-header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+  }
+
+  /* Container da Thumbnail */
+  .thumb-container {
+      position: relative;
+      width: 640px;
+      height: 360px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 
+          0 20px 60px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  /* O preview YOUTUBE */
+  .yt-preview {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+  }
+
+  /* Elementos thumbnail */
+  .thumb-title {
+      font-size: 48px;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      word-break: break-word;
+      transition: all 0.3s ease;
+  }
+
+  .thumb-subtitle {
+      font-size: 20px;
+      opacity: 0.8;
+      text-align: center;
+      transition: all 0.3s ease;
+  }
+
+  .thumb-accent {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.6;
+  }
+
+  .thumb-emoji {
+      position: absolute;
+      font-size: 120px;
+      opacity: 0.1;
+      pointer-events: none;
+  }
+
+  /* Preview YouTube Grid */
+  .yt-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 24px;
+      background: var(--bg-panel);
+      border-radius: 16px;
+      max-width: 680px;
+  }
+
+  .yt-mini {
+      font-size: 13px;
+      color: var(--text-muted);
+  }
+
+  .yt-mini-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--bg-card), var(--surface));
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+  }
+
+  /* Info bar */
+  .info-bar {
+      display: flex;
+      gap: 24px;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+  }
+
+  .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+  }
+
+  .info-item span {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+  }
+
+  .info-item strong {
+      font-size: 18px;
+      color: var(--accent-cyan);
+  }
+
+  /* Adicionar arquivo de imagem */
+  .image-upload {
+      margin-top: 8px;
+  }
+
+  .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+  }
+
+  .upload-zone:hover {
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+  }
+
+  input[type="file"] { display: none; }
+
+  /* Canvas export (hidden) */
+  canvas { display: none; }
+
+  /* Scroll hint */
+  .scroll-hint {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+  }
+
+  /* =============================================
+     PRESETS VISUAIS (temas prontos)
+     ============================================= */
+  .theme-lofi .yt-preview {
+      background: linear-gradient(180deg, #2d1b69 0%, #1a1a2e 50%, #0f0f1a 100%);
+  }
+  .theme-lofi .thumb-title { 
+      color: #ffd6cc; 
+      text-shadow: 0 2px 20px rgba(255, 150, 100, 0.3); 
+  }
+  .theme-lofi .thumb-subtitle { 
+      color: #ff99aa; 
+      opacity: 0.9; 
+  }
+
+  .theme-synthwave .yt-preview {
+      background: linear-gradient(180deg, #1a0b2e 0%, #2d0a31 50%, #0f0514 100%);
+  }
+  .theme-synthwave .thumb-title { 
+      color: #ff00ff; 
+      text-shadow: 
+          0 0 10px rgba(255, 0, 255, 0.5),
+          0 0 40px rgba(255, 0, 255, 0.3); 
+  }
+  .theme-synthwave .thumb-subtitle { 
+      color: #00ffff; 
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  }
+
+  .theme-vaporwave .yt-preview {
+      background: linear-gradient(135deg, #ff6ad5 0%, #c774e8 50%, #94b0ff 100%);
+  }
+  .theme-vaporwave .thumb-title { 
+      color: #fff; 
+      text-shadow: 2px 2px 0 #ff00ff; 
+  }
+  .theme-vaporwave .thumb-subtitle { 
+      color: #ffe6f7; 
+  }
+
+  .theme-dark-academia .yt-preview {
+      background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%);
+  }
+  .theme-dark-academia .thumb-title { 
+      color: #e8dcc8; 
+      font-family: 'Georgia', serif; 
+  }
+  .theme-dark-academia .thumb-subtitle { 
+      color: #b8a88a; 
+  }
+
+  .theme-neon-night .yt-preview {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 50%, #0a0011 100%);
+  }
+  .theme-neon-night .thumb-title { 
+      color: #39ff14; 
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.5); 
+  }
+  .theme-neon-night .thumb-subtitle { 
+      color: #ff00ff; 
+      text-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+  }
+
+  .theme-midnight-jazz .yt-preview {
+      background: linear-gradient(180deg, #1a1a3e 0%, #2e1a47 50%, #1a0b2e 100%);
+  }
+  .theme-midnight-jazz .thumb-title { 
+      color: #ffd700; 
+      font-family: 'Georgia', serif; 
+      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.4); 
+  }
+  .theme-midnight-jazz .thumb-subtitle { 
+      color: #e6e6fa; 
+  }
+
+  /* =============================================
+     RESPONSIVO
+     ============================================= */
+  @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .controls { 
+          max-height: none; 
+          position: relative; 
+          border-right: none; 
+          border-bottom: 1px solid var(--border); 
+      }
+      .thumb-container { 
+          width: 100%; 
+          max-width: 640px; 
+      }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+    <!-- ==========================================
+         PAINEL DE CONTROLE (ESQUERDA)
+         ========================================== -->
+    <aside class="controls">
+        <div class="logo">
+            <div class="logo-icon">🎵</div>
+            <div>
+                <h1>Thumbnail Studio</h1>
+                <p>Editor de thumbnails para YouTube</p>
+            </div>
+        </div>
+
+        <!-- PRESETS RÁPIDOS -->
+        <div class="control-group">
+            <label class="control-label">
+                🎨 ESTILO PRÉ-DEFINIDO
+            </label>
+            <div class="preset-grid">
+                <button class="preset-btn active" data-theme="theme-lofi" onclick="setTheme(this, 'theme-lofi')">
+                    🌙 Lo-Fi
+                </button>
+                <button class="preset-btn" data-theme="theme-synthwave" onclick="setTheme(this, 'theme-synthwave')">
+                    🌆 Synthwave
+                </button>
+                <button class="preset-btn" data-theme="theme-vaporwave" onclick="setTheme(this, 'theme-vaporwave')">
+                    🌸 Vaporwave
+                </button>
+                <button class="preset-btn" data-theme="theme-dark-academia" onclick="setTheme(this, 'theme-dark-academia')">
+                    📚 Dark Academia
+                </button>
+                <button class="preset-btn" data-theme="theme-neon-night" onclick="setTheme(this, 'theme-neon-night')">
+                    💚 Neon Night
+                </button>
+                <button class="preset-btn" data-theme="theme-midnight-jazz" onclick="setTheme(this, 'theme-midnight-jazz')">
+                    🎷 Midnight Jazz
+                </button>
+            </div>
+        </div>
+
+        <!-- TÍTULO -->
+        <div class="control-group">
+            <label class="control-label">
+                ✏️ TÍTULO PRINCIPAL
+            </label>
+            <input type="text" id="titleInput" value="STUDY BEATS" 
+                   placeholder="Digite o título..." oninput="updateThumbnail()">
+        </div>
+
+        <!-- SUBTÍTULO -->
+        <div class="control-group">
+            <label class="control-label">
+                📝 SUBTÍTULO
+            </label>
+            <input type="text" id="subtitleInput" value="lofi hip hop radio • beats to relax" 
+                   placeholder="Digite o subtítulo..." oninput="updateThumbnail()">
+        </div>
+
+        <!-- COR DO TÍTULO -->
+        <div class="control-group">
+            <label class="control-label">
+                🎨 COR DO TÍTULO
+            </label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="color" id="titleColor" value="#ffd6cc" 
+                       onchange="updateCustomColor()" style="width: 60px;">
+                <input type="text" id="titleColorText" value="#ffd6cc" 
+                       onchange="updateColorFromText()" style="flex: 1;">
+            </div>
+        </div>
+
+        <!-- TAMANHO DA FONTE -->
+        <div class="control-group">
+            <label class="control-label">
+                📐 TAMANHO DO TÍTULO
+                <span id="fontSizeValue" class="count">48px</span>
+            </label>
+            <input type="range" id="fontSize" min="24" max="80" value="48" 
+                   oninput="updateFontSize(this.value)">
+        </div>
+
+        <!-- TAMANHO DO SUBTÍTULO -->
+        <div class="control-group">
+            <label class="control-label">
+                📐 TAMANHO SUBTÍTULO
+                <span id="subtitleSizeValue" class="count">20px</span>
+            </label>
+            <input type="range" id="subtitleSize" min="12" max="36" value="20" 
+                   oninput="updateSubtitleSize(this.value)">
+        </div>
+
+        <!-- BACKGROUND CUSTOM -->
+        <div class="control-group">
+            <label class="control-label">
+                🌈 FUNDO PERSONALIZADO
+            </label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="color" id="bgColor1" value="#2d1b69" 
+                       onchange="updateCustomBackground()" style="width: 60px;">
+                <span style="color: var(--text-muted); font-size: 12px;">→</span>
+                <input type="color" id="bgColor2" value="#0f0f1a" 
+                       onchange="updateCustomBackground()" style="width: 60px;">
+            </div>
+        </div>
+
+        <!-- EMOJI/IMAGEM DE FUNDO -->
+        <div class="control-group">
+            <label class="control-label">
+                🖼️ IMAGEM DE FUNDO
+            </label>
+            <div class="upload-zone" onclick="document.getElementById('bgImage').click()">
+                <div>📁 Clique para upload de imagem</div>
+                <div style="font-size: 11px; margin-top: 4px;">Ou cole URL abaixo:</div>
+            </div>
+            <input type="file" id="bgImage" accept="image/*" onchange="handleImageUpload(event)">
+            <input type="text" id="bgImageUrl" placeholder="https://..." 
+                   style="margin-top: 8px;" onchange="updateBackgroundFromUrl()">
+        </div>
+
+        <!-- BOTÕES -->
+        <button class="btn-primary" onclick="downloadThumbnail()">
+            ⬇️ Download Thumbnail (1280×720)
+        </button>
+        
+        <button class="btn-secondary" onclick="resetDefaults()">
+            🔄 Resetar Padrões
+        </button>
+
+        <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 12px;">
+            💡 Dica: Exporte em 1280×720px para YouTube
+        </div>
+    </aside>
+
+    <!-- ==========================================
+         ÁREA DE PRÉVIA (DIREITA)
+         ========================================== -->
+    <main class="preview-area">
+        <div class="preview-header">
+            <h2>Prévia da Thumbnail</h2>
+            <p>Como seu vídeo aparecerá no YouTube</p>
+        </div>
+
+        <!-- THUMBNAIL PRINCIPAL -->
+        <div class="thumb-container" id="thumbPreview">
+            <div class="yt-preview theme-lofi" id="previewContent">
+                <div class="thumb-accent" style="background: #ff9966; top: 10%; right: 10%;"></div>
+                <div class="thumb-accent" style="background: #663399; bottom: 10%; left: 10%; width: 150px; height: 150px;"></div>
+                <div class="thumb-emoji">🎵</div>
+                <div class="thumb-title" id="previewTitle">STUDY BEATS</div>
+                <div class="thumb-subtitle" id="previewSubtitle">lofi hip hop radio • beats to relax</div>
+            </div>
+        </div>
+
+        <!-- GRID DE PRÉVIA YOUTUBE -->
+        <div class="yt-preview-grid">
+            <div class="yt-mini">
+                <strong style="color: var(--text-secondary);">Tamanho real YouTube</strong>
+                <div class="yt-mini-thumb" id="miniThumb1" style="background: linear-gradient(135deg, #2d1b69, #1a1a2e);"></div>
+                <p style="margin-top: 6px; line-height: 1.4;">Lofi Girl - Study Beats</p>
+                <p style="color: var(--text-muted); font-size: 11px;">12M views • 2 years ago</p>
+            </div>
+            <div class="yt-mini">
+                <strong style="color: var(--text-secondary);">Em lista/relacionados</strong>
+                <div class="yt-mini-thumb" id="miniThumb2" style="background: linear-gradient(135deg, #2d1b69, #1a1a2e);"></div>
+                <p style="margin-top: 6px; line-height: 1.4;">Chill Beats to Study</p>
+                <p style="color: var(--text-muted); font-size: 11px;">5M views • 1 year ago</p>
+            </div>
+        </div>
+
+        <!-- INFORMAÇÕES TÉCNICAS -->
+        <div class="info-bar">
+            <div class="info-item">
+                <span>Resolução</span>
+                <strong>1280×720</strong>
+            </div>
+            <div class="info-item">
+                <span>Aspect Ratio</span>
+                <strong>16:9</strong>
+            </div>
+            <div class="info-item">
+                <span>Formato</span>
+                <strong>PNG/JPG</strong>
+            </div>
+            <div class="info-item">
+                <span>Tamanho Max</span>
+                <strong>&lt; 2MB</strong>
+            </div>
+        </div>
+
+        <!-- CANVAS PARA EXPORT -->
+        <canvas id="exportCanvas" width="1280" height="720"></canvas>
+    </main>
+</div>
+
+<script>
+// =============================================
+// CONTROLE DOS TEMAS
+// =============================================
+let currentTheme = 'theme-lofi';
+
+function setTheme(btn, themeName) {
+    // Remove active de todos
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    // Adiciona active ao clicado
+    btn.classList.add('active');
+    
+    // Aplica tema
+    currentTheme = themeName;
+    const preview = document.getElementById('previewContent');
+    preview.className = 'yt-preview ' + themeName;
+    
+    // Atualiza miniaturas
+    updateMiniThumbs();
+}
+
+// =============================================
+// ATUALIZAÇÃO DO TEXTO
+// =============================================
+function updateThumbnail() {
+    const title = document.getElementById('titleInput').value || 'TÍTULO';
+    const subtitle = document.getElementById('subtitleInput').value || 'Subtítulo';
+    
+    document.getElementById('previewTitle').textContent = title;
+    document.getElementById('previewSubtitle').textContent = subtitle;
+}
+
+// =============================================
+// CONTROLE DE CORES
+// =============================================
+function updateCustomColor() {
+    const color = document.getElementById('titleColor').value;
+    document.getElementById('titleColorText').value = color;
+    
+    const title = document.getElementById('previewTitle');
+    const subtitle = document.getElementById('previewSubtitle');
+    
+    title.style.color = color;
+    title.style.textShadow = `0 0 20px ${color}80`;
+}
+
+function updateColorFromText() {
+    const color = document.getElementById('titleColorText').value;
+    document.getElementById('titleColor').value = color;
+    updateCustomColor();
+}
+
+function updateCustomBackground() {
+    const color1 = document.getElementById('bgColor1').value;
+    const color2 = document.getElementById('bgColor2').value;
+    const preview = document.getElementById('previewContent');
+    
+    preview.style.background = `linear-gradient(135deg, ${color1}, ${color2})`;
+    preview.className = 'yt-preview'; // Remove tema atual
+}
+
+// =============================================
+// CONTROLE DE TAMANHO
+// =============================================
+function updateFontSize(size) {
+    document.getElementById('previewTitle').style.fontSize = size + 'px';
+    document.getElementById('fontSizeValue').textContent = size + 'px';
+}
+
+function updateSubtitleSize(size) {
+    document.getElementById('previewSubtitle').style.fontSize = size + 'px';
+    document.getElementById('subtitleSizeValue').textContent = size + 'px';
+}
+
+// =============================================
+// IMAGEM DE FUNDO
+// =============================================
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        setBackgroundImage(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateBackgroundFromUrl() {
+    const url = document.getElementById('bgImageUrl').value;
+    if (url) setBackgroundImage(url);
+}
+
+function setBackgroundImage(imageUrl) {
+    const preview = document.getElementById('previewContent');
+    preview.style.background = `url(${imageUrl}) center/cover no-repeat`;
+    preview.style.backgroundColor = '#000'; // Fallback
+    preview.className = 'yt-preview'; // Remove temas
+}
+
+// =============================================
+// MINIATURAS
+// =============================================
+function updateMiniThumbs() {
+    const preview = document.getElementById('previewContent');
+    const bg = window.getComputedStyle(preview).background;
+    
+    document.getElementById('miniThumb1').style.background = bg;
+    document.getElementById('miniThumb2').style.background = bg;
+}
+
+// =============================================
+// RESET
+// =============================================
+function resetDefaults() {
+    document.getElementById('titleInput').value = 'STUDY BEATS';
+    document.getElementById('subtitleInput').value = 'lofi hip hop radio • beats to relax';
+    document.getElementById('fontSize').value = 48;
+    document.getElementById('subtitleSize').value = 20;
+    
+    updateThumbnail();
+    updateFontSize(48);
+    updateSubtitleSize(20);
+    
+    // Reseta tema
+    setTheme(document.querySelector('[data-theme="theme-lofi"]'), 'theme-lofi');
+}
+
+// =============================================
+// DOWNLOAD DO THUMBNAIL
+// =============================================
+function downloadThumbnail() {
+    const canvas = document.getElementById('exportCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Obtém estilos atuais
+    const preview = document.getElementById('previewContent');
+    const title = document.getElementById('previewTitle').textContent;
+    const subtitle = document.getElementById('previewSubtitle').textContent;
+    
+    // Limpa canvas
+    ctx.clearRect(0, 0, 1280, 720);
+    
+    // Background
+    const style = window.getComputedStyle(preview);
+    const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
+    gradient.addColorStop(0, '#2d1b69');
+    gradient.addColorStop(1, '#0f0f1a');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1280, 720);
+    
+    // Efeitos/blurs decorativos
+    ctx.fillStyle = 'rgba(255, 150, 100, 0.1)';
+    ctx.beginPath();
+    ctx.arc(800, 150, 200, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = 'rgba(102, 51, 153, 0.15)';
+    ctx.beginPath();
+    ctx.arc(200, 600, 250, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Emoji decorativo (sutil)
+    ctx.font = '200px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎵', 100, 200);
+    
+    // Título
+    ctx.font = 'bold 90px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd6cc';
+    ctx.shadowColor = 'rgba(255, 150, 100, 0.5)';
+    ctx.shadowBlur = 30;
+    ctx.fillText(title, 640, 340);
+    ctx.shadowBlur = 0;
+    
+    // Subtítulo
+    ctx.font = '32px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255, 153, 170, 0.9)';
+    ctx.fillText(subtitle, 640, 400);
+    
+    // Download
+    const link = document.createElement('a');
+    link.download = `thumbnail-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    // Feedback visual
+    const btn = document.querySelector('.btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '✅ Download iniciado!';
+    btn.style.background = 'linear-gradient(135deg, #00ff88, #00aa55)';
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = '';
+    }, 2000);
+}
+
+// =============================================
+// INICIALIZAÇÃO
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    updateThumbnail();
+    updateMiniThumbs();
+});
+</script>
+
+</body>
+</html>

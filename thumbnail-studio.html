@@ -630,6 +630,110 @@
       50% { opacity: 0.8; transform: scale(1.1); }
   }
 
+
+  /* =============================================
+     CONTROLE DE POSIÇÃO DO TEXTO
+     ============================================= */
+  .position-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 4px;
+  }
+
+  .pos-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+  }
+
+  .pos-btn:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.1);
+  }
+
+  .pos-btn.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+  }
+
+  /* Container de texto para posicionamento */
+  .text-container {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+      cursor: default;
+      z-index: 10;
+  }
+
+  .text-container.dragging {
+      cursor: grabbing !important;
+      transition: none;
+  }
+  .text-container.draggable {
+      cursor: grab;
+  }
+
+  /* Posições pré-definidas */
+  .text-container.pos-center {
+      align-items: center;
+      justify-content: center;
+  }
+  .text-container.pos-top-left {
+      align-items: flex-start;
+      justify-content: flex-start;
+  }
+  .text-container.pos-top-center {
+      align-items: center;
+      justify-content: flex-start;
+  }
+  .text-container.pos-top-right {
+      align-items: flex-end;
+      justify-content: flex-start;
+  }
+  .text-container.pos-middle-left {
+      align-items: flex-start;
+      justify-content: center;
+  }
+  .text-container.pos-middle-right {
+      align-items: flex-end;
+      justify-content: center;
+  }
+  .text-container.pos-bottom-left {
+      align-items: flex-start;
+      justify-content: flex-end;
+  }
+  .text-container.pos-bottom-center {
+      align-items: center;
+      justify-content: flex-end;
+  }
+  .text-container.pos-bottom-right {
+      align-items: flex-end;
+      justify-content: flex-end;
+  }
+
+  /* Estilo para drag habilitado */
+  .drag-toggle.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+  }
+
 @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
       .controls { 
@@ -743,6 +847,38 @@
             <input type="range" id="subtitleSize" min="12" max="36" value="20" 
                    oninput="updateSubtitleSize(this.value)">
         </div>
+        <!-- POSIÇÃO DO TEXTO -->
+        <div class="control-group">
+            <label class="control-label">
+                📍 POSIÇÃO DO TEXTO
+            </label>
+            <div class="position-grid">
+                <button class="pos-btn" onclick="setPosition('top-left')">↖</button>
+                <button class="pos-btn active" onclick="setPosition('top-center')">⬆</button>
+                <button class="pos-btn" onclick="setPosition('top-right')">↗</button>
+                <button class="pos-btn" onclick="setPosition('middle-left')">⬅</button>
+                <button class="pos-btn" onclick="setPosition('center')">⏺</button>
+                <button class="pos-btn" onclick="setPosition('middle-right')">➡</button>
+                <button class="pos-btn" onclick="setPosition('bottom-left')">↙</button>
+                <button class="pos-btn" onclick="setPosition('bottom-center')">⬇</button>
+                <button class="pos-btn" onclick="setPosition('bottom-right')">↘</button>
+            </div>
+        </div>
+
+        <!-- ARRASTAR -->
+        <div class="control-group">
+            <label class="control-label">
+                🖱️ ARRASTAR TEXTO
+            </label>
+            <button class="btn-secondary drag-toggle" id="dragToggle" onclick="toggleDrag()">
+                🖱️ Ativar Arraste
+            </button>
+            <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+                Clique e arraste o texto na thumbnail
+            </div>
+        </div>
+
+
 
         <!-- BACKGROUND CUSTOM -->
         <div class="control-group">
@@ -801,8 +937,10 @@
                 <div class="thumb-accent" style="background: #ff9966; top: 10%; right: 10%;"></div>
                 <div class="thumb-accent" style="background: #663399; bottom: 10%; left: 10%; width: 150px; height: 150px;"></div>
                 <div class="thumb-emoji">🎵</div>
-                <div class="thumb-title" id="previewTitle">STUDY BEATS</div>
-                <div class="thumb-subtitle" id="previewSubtitle">lofi hip hop radio • beats to relax</div>
+                <div class="text-container pos-center" id="textContainer">
+                    <div class="thumb-title" id="previewTitle">STUDY BEATS</div>
+                    <div class="thumb-subtitle" id="previewSubtitle">lofi hip hop radio • beats to relax</div>
+                </div>
             </div>
         </div>
 
@@ -973,11 +1111,158 @@ function resetDefaults() {
     
     // Reseta tema
     setTheme(document.querySelector('[data-theme="theme-lofi"]'), 'theme-lofi');
+    
+    // Reseta posição
+    setPosition('center');
+    
+    // Desativa drag se estiver ativo
+    if (dragMode) toggleDrag();
 }
 
 // =============================================
 // DOWNLOAD DO THUMBNAIL
 // =============================================
+
+
+// =============================================
+// CONTROLE DE POSIÇÃO DO TEXTO
+// =============================================
+let currentPosition = 'center';
+let dragMode = false;
+
+function setPosition(pos) {
+    currentPosition = pos;
+    const container = document.getElementById('textContainer');
+    container.className = 'text-container pos-' + pos;
+    
+    // Destacar botão ativo
+    document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.pos-btn').forEach(b => {
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(pos)) {
+            b.classList.add('active');
+        }
+    });
+}
+
+// =============================================
+// DRAG & DROP
+// =============================================
+let isDragging = false;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+function toggleDrag() {
+    const btn = document.getElementById('dragToggle');
+    const container = document.getElementById('textContainer');
+    
+    dragMode = !dragMode;
+    
+    if (dragMode) {
+        btn.innerHTML = '✋ Desativar Arraste';
+        btn.classList.add('active');
+        container.classList.add('draggable');
+        container.style.top = '';
+        container.style.left = '';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.className = 'text-container';
+        container.style.position = 'absolute';
+        container.style.padding = '20px';
+    } else {
+        btn.innerHTML = '🖱️ Ativar Arraste';
+        btn.classList.remove('active');
+        container.classList.remove('draggable', 'dragging');
+        container.style.left = '';
+        container.style.top = '';
+        container.style.transform = '';
+        container.className = 'text-container pos-' + currentPosition;
+    }
+}
+
+function initDrag() {
+    const container = document.getElementById('textContainer');
+    
+    container.addEventListener('mousedown', function(e) {
+        if (!dragMode) return;
+        isDragging = true;
+        container.classList.add('dragging');
+        
+        const rect = container.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const parent = container.parentElement;
+        const parentRect = parent.getBoundingClientRect();
+        
+        let x = e.clientX - parentRect.left - dragOffsetX;
+        let y = e.clientY - parentRect.top - dragOffsetY;
+        
+        // Limitar dentro da thumbnail
+        x = Math.max(0, Math.min(x, parentRect.width - container.offsetWidth));
+        y = Math.max(0, Math.min(y, parentRect.height - container.offsetHeight));
+        
+        container.style.left = x + 'px';
+        container.style.top = y + 'px';
+        container.style.position = 'absolute';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.className = 'text-container';
+        container.style.padding = '20px';
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            container.classList.remove('dragging');
+        }
+    });
+    
+    // Touch suporte
+    container.addEventListener('touchstart', function(e) {
+        if (!dragMode) return;
+        isDragging = true;
+        container.classList.add('dragging');
+        
+        const touch = e.touches[0];
+        const rect = container.getBoundingClientRect();
+        dragOffsetX = touch.clientX - rect.left;
+        dragOffsetY = touch.clientY - rect.top;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const parent = container.parentElement;
+        const parentRect = parent.getBoundingClientRect();
+        
+        let x = touch.clientX - parentRect.left - dragOffsetX;
+        let y = touch.clientY - parentRect.top - dragOffsetY;
+        
+        x = Math.max(0, Math.min(x, parentRect.width - container.offsetWidth));
+        y = Math.max(0, Math.min(y, parentRect.height - container.offsetHeight));
+        
+        container.style.left = x + 'px';
+        container.style.top = y + 'px';
+        container.style.position = 'absolute';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.className = 'text-container';
+        container.style.padding = '20px';
+    });
+    
+    document.addEventListener('touchend', function() {
+        isDragging = false;
+        container.classList.remove('dragging');
+    });
+}
+
 function downloadThumbnail() {
     const canvas = document.getElementById('exportCanvas');
     const ctx = canvas.getContext('2d');
@@ -1053,6 +1338,7 @@ function downloadThumbnail() {
 document.addEventListener('DOMContentLoaded', function() {
     updateThumbnail();
     updateMiniThumbs();
+    initDrag();
 });
 </script>
 

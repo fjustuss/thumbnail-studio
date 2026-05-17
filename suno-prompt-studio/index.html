@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno Prompt Studio</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-gold: #fbbf24;
+            --accent-gold-hover: #f59e0b;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 800px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: #2a2a2a;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-generate {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-generate:hover {
+            background-color: var(--accent-blue-hover);
+        }
+
+        .btn-copy {
+            background-color: #10b981;
+            color: white;
+            display: none; /* Hidden until generated */
+        }
+        
+        .btn-copy:hover {
+            background-color: #059669;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            display: none; /* Hidden until generated */
+        }
+
+        .result-box {
+            background-color: #000;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .section-title {
+            color: #888;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎧 Suno Prompt Studio</h1>
+        <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Gerador automático de prompts para IA Musical (v5.5 Ready)</p>
+
+        <div class="form-group">
+            <label for="channel">📺 Selecione o Canal:</label>
+            <select id="channel">
+                <option value="spotlight">🎤 SpotlightTv (The Voice / AGT Style)</option>
+                <option value="enzo">⛪️ Enzo Barros (Trap Gospel)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="theme">📝 Tema / Assunto da Música:</label>
+            <input type="text" id="theme" placeholder="Ex: Superando o medo do palco, ou, Vencendo a depressão com fé..." required>
+        </div>
+
+        <div class="form-group">
+            <label for="custom_lyrics">✍️ Letra (Opcional - Deixe em branco para o agente gerar ou cole a sua):</label>
+            <textarea id="custom_lyrics" placeholder="Cole sua letra aqui ou deixe em branco para ver o template estrutural com metatags."></textarea>
+        </div>
+
+        <button class="btn btn-generate" onclick="generatePrompt()">🚀 Gerar Prompt Suno</button>
+
+        <div class="result-container" id="resultContainer">
+            <h3>Seu Prompt está pronto!</h3>
+            
+            <div class="section-title">STYLE OF MUSIC (Cole na caixa Style)</div>
+            <div class="result-box" id="styleBox"></div>
+            <button class="btn btn-copy" style="display: block; margin-bottom: 20px;" onclick="copyToClipboard('styleBox', this)">📋 Copiar Style</button>
+
+            <div class="section-title">LYRICS & METATAGS (Cole na caixa Lyrics)</div>
+            <div class="result-box" id="lyricsBox"></div>
+            <button class="btn btn-copy" style="display: block;" onclick="copyToClipboard('lyricsBox', this)">📋 Copiar Letra</button>
+        </div>
+    </div>
+
+    <script>
+        const profiles = {
+            spotlight: {
+                style: "Emotional cinematic pop ballad, powerful vocal performance, building tension, intimate start to epic orchestral climax, live stage feel, stadium acoustics, standing ovation energy, English lyrics, live talent show audition. Female powerhouse vocalist with slight rasp.",
+                template: `[Intro] 
+[Live audience murmur fading]
+[Sparse piano]
+
+[Verse 1] 
+[Intimate] [Breathy] [Vulnerable]
+(Escreva sobre o início tímido e o tema: {theme})
+
+[Pre-Chorus] 
+[Building Energy] [Strings swelling]
+
+[Chorus] 
+[Powerful] [Belted] [Emotional]
+(O grande clímax da música)
+
+[Verse 2] 
+[Confident] [Steady rhythm]
+
+[Bridge] 
+[Emotional Climax] [Orchestral Swell] [Vocal Run]
+
+[Chorus] 
+[Explosive] [Full Belting] [High Note]
+
+[Outro] 
+[Vocal fading out] [Piano resolving]
+[Live Applause] [Cheering crowd]
+[End]`
+            },
+            enzo: {
+                style: "Brazilian trap gospel, heavy 808 bass, crisp hi-hats, urban hip-hop beat, atmospheric synth pads, modern rap flow, melodic trap, 90 bpm, autotune. Male rapper with dynamic flow, transitioning between rhythmic spoken delivery and melodic choruses.",
+                template: `[Intro] 
+[Atmospheric synth] [Beat drop]
+Yeah, Enzo Barros.
+(Ad-libs sobre o tema: {theme})
+
+[Verse 1] 
+[Fast rap flow] [Heavy 808 bass]
+(Verso rápido focado na vivência e superação)
+
+[Chorus] 
+[Melodic trap] [Harmonized] [Autotune]
+(Refrão melódico e marcante com a mensagem de fé)
+
+[Verse 2] 
+[Aggressive delivery] [Rhythmic]
+
+[Chorus] 
+[High energy] [Explosive drop]
+
+[Outro] 
+[Fading beat] [Spoken word]
+(Mensagem final falada)
+[End]`
+            }
+        };
+
+        function generatePrompt() {
+            const channel = document.getElementById('channel').value;
+            const theme = document.getElementById('theme').value || "Tema livre";
+            const customLyrics = document.getElementById('custom_lyrics').value;
+
+            const profile = profiles[channel];
+            
+            // Set Style
+            document.getElementById('styleBox').textContent = profile.style;
+
+            // Set Lyrics
+            let finalLyrics = "";
+            if (customLyrics.trim() !== "") {
+                finalLyrics = customLyrics; // If user provided lyrics, just use them (maybe we could inject tags later, but keep it simple for now)
+            } else {
+                finalLyrics = profile.template.replace('{theme}', theme).replace('{theme}', theme);
+            }
+            
+            document.getElementById('lyricsBox').textContent = finalLyrics;
+
+            // Show results
+            document.getElementById('resultContainer').style.display = 'block';
+            
+            // Scroll down
+            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyToClipboard(elementId, btnElement) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "✅ Copiado!";
+                btnElement.style.backgroundColor = "#047857";
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.backgroundColor = "#10b981";
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

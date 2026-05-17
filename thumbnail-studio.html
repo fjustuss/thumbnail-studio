@@ -631,7 +631,102 @@
   }
 
 
+  
   /* =============================================
+     CANAL TEMPLATES, FOTO ARTISTA, WATERMARK
+     ============================================= */
+  .template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+  }
+
+  .template-btn {
+      background: var(--surface);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+  }
+  .template-btn:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.1);
+  }
+  .template-btn.active {
+      border-color: var(--accent-pink);
+      background: rgba(255, 0, 170, 0.1);
+  }
+  .template-btn .t-icon { font-size: 28px; display: block; margin-bottom: 4px; }
+  .template-btn .t-name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+  .template-btn .t-desc { font-size: 10px; color: var(--text-muted); }
+
+  .photo-area {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100px;
+      transition: border-color 0.2s;
+  }
+  .photo-area:hover { border-color: var(--accent-cyan); }
+  .photo-area.has-photo { border-style: solid; border-color: var(--accent-cyan); }
+  .photo-area img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0; left: 0;
+  }
+  .photo-area .photo-placeholder {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      z-index: 1;
+  }
+  .photo-area .photo-placeholder .big-icon { font-size: 32px; display: block; margin-bottom: 6px; }
+  .photo-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1;
+  }
+
+  .watermark-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      width: 100%;
+  }
+  .watermark-input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+  }
+
+  /* Foto do artista na thumbnail */
+  .artist-photo-thumb {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 5;
+      display: none;
+  }
+
+/* =============================================
      CONTROLE DE POSIÇÃO DO TEXTO
      ============================================= */
   .position-grid {
@@ -764,7 +859,27 @@
             </div>
         </div>
 
-        <!-- PRESETS RÁPIDOS -->
+        
+        <!-- CANAIS PRESET -->
+        <div class="control-group">
+            <label class="control-label">
+                📺 MEUS CANAIS
+            </label>
+            <div class="template-grid">
+                <button class="template-btn" onclick="loadTemplate('the-voice')">
+                    <span class="t-icon">🎤</span>
+                    <span class="t-name">The Voice</span>
+                    <span class="t-desc">Reality / Auditório</span>
+                </button>
+                <button class="template-btn" onclick="loadTemplate('trap-gospel')">
+                    <span class="t-icon">⛪</span>
+                    <span class="t-name">Trap Gospel</span>
+                    <span class="t-desc">Fé / Urbano</span>
+                </button>
+            </div>
+        </div>
+
+<!-- PRESETS RÁPIDOS -->
         <div class="control-group">
             <label class="control-label">
                 🎨 ESTILO PRÉ-DEFINIDO
@@ -880,7 +995,26 @@
 
 
 
-        <!-- BACKGROUND CUSTOM -->
+        
+        <!-- FOTO DO ARTISTA -->
+        <div class="control-group">
+            <label class="control-label">
+                📸 FOTO DO ARTISTA
+            </label>
+            <div class="photo-area" id="photoArea" onclick="document.getElementById('artistPhotoInput').click()">
+                <div class="photo-placeholder" id="photoPlaceholder">
+                    <span class="big-icon">📸</span>
+                    Clique para adicionar<br>foto do artista
+                </div>
+                <img id="photoPreview" src="" style="display:none">
+                <input type="file" id="artistPhotoInput" accept="image/*" style="display:none" onchange="handleArtistPhoto(event)">
+            </div>
+            <button class="btn-secondary" onclick="removeArtistPhoto()" style="margin-top:4px;font-size:11px;padding:6px;">
+                ❌ Remover foto
+            </button>
+        </div>
+
+<!-- BACKGROUND CUSTOM -->
         <div class="control-group">
             <label class="control-label">
                 🌈 FUNDO PERSONALIZADO
@@ -908,7 +1042,17 @@
                    style="margin-top: 8px;" onchange="updateBackgroundFromUrl()">
         </div>
 
-        <!-- BOTÕES -->
+        
+        <!-- NOME DO CANAL / WATERMARK -->
+        <div class="control-group">
+            <label class="control-label">
+                🏷️ NOME DO CANAL
+            </label>
+            <input type="text" id="channelName" class="watermark-input" 
+                   value="@fjustuss" placeholder="@seucanal" oninput="updatePreview()">
+        </div>
+
+<!-- BOTÕES -->
         <button class="btn-primary" onclick="downloadThumbnail()">
             ⬇️ Download Thumbnail (1280×720)
         </button>
@@ -937,6 +1081,7 @@
                 <div class="thumb-accent" style="background: #ff9966; top: 10%; right: 10%;"></div>
                 <div class="thumb-accent" style="background: #663399; bottom: 10%; left: 10%; width: 150px; height: 150px;"></div>
                 <div class="thumb-emoji">🎵</div>
+                <img class="artist-photo-thumb" id="artistPhoto" src="" alt="Artista">
                 <div class="text-container pos-center" id="textContainer">
                     <div class="thumb-title" id="previewTitle">STUDY BEATS</div>
                     <div class="thumb-subtitle" id="previewSubtitle">lofi hip hop radio • beats to relax</div>
@@ -987,6 +1132,137 @@
 
 <script>
 // =============================================
+
+// =============================================
+// CANAIS TEMPLATES
+// =============================================
+const CANAL_CONFIGS = {
+    'the-voice': {
+        title: 'THE VOICE AUDITION',
+        subtitle: 'participante • música',
+        theme: 'theme-the-voice',
+        fontSize: 52,
+        subtitleSize: 22,
+        position: 'center',
+        titleColor: '#ffffff',
+        bgColor1: '#0a0a1a',
+        bgColor2: '#1a0a2e'
+    },
+    'trap-gospel': {
+        title: 'NOME DA MÚSICA',
+        subtitle: 'trap gospel • Deus no controle',
+        theme: 'theme-trap-gospel',
+        fontSize: 52,
+        subtitleSize: 20,
+        position: 'center',
+        titleColor: '#ffd700',
+        bgColor1: '#0f0f1f',
+        bgColor2: '#1a0a3e'
+    }
+};
+
+function loadTemplate(name) {
+    const config = CANAL_CONFIGS[name];
+    if (!config) return;
+    
+    // Marcar botão ativo
+    document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    
+    // Nome do canal
+    if (name === 'the-voice') {
+        document.getElementById('channelName').value = '@fjustuss.voice';
+    } else {
+        document.getElementById('channelName').value = '@fjustuss.gospel';
+    }
+    
+    // Aplicar configurações
+    document.getElementById('titleInput').value = config.title;
+    document.getElementById('subtitleInput').value = config.subtitle;
+    document.getElementById('fontSize').value = config.fontSize;
+    document.getElementById('subtitleSize').value = config.subtitleSize;
+    document.getElementById('titleColor').value = config.titleColor;
+    document.getElementById('titleColorText').value = config.titleColor;
+    document.getElementById('bgColor1').value = config.bgColor1;
+    document.getElementById('bgColor2').value = config.bgColor2;
+    
+    // Tema
+    const themeBtn = document.querySelector(`[data-theme="${config.theme}"]`);
+    if (themeBtn) setTheme(themeBtn, config.theme);
+    
+    // Posição
+    setPosition(config.position);
+    
+    // Atualizar campos
+    updateFontSize(config.fontSize);
+    updateSubtitleSize(config.subtitleSize);
+    updateCustomColor();
+    updateCustomBackground();
+    updateThumbnail();
+    
+    // Feedback
+    const btn = event.currentTarget;
+    btn.style.borderColor = '#00ff88';
+    setTimeout(() => btn.style.borderColor = '', 1500);
+}
+
+// =============================================
+// FOTO DO ARTISTA
+// =============================================
+let artistPhotoData = null;
+
+function handleArtistPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        artistPhotoData = e.target.result;
+        
+        // Preview no painel
+        const photoArea = document.getElementById('photoArea');
+        const placeholder = document.getElementById('photoPlaceholder');
+        const preview = document.getElementById('photoPreview');
+        
+        placeholder.style.display = 'none';
+        preview.src = artistPhotoData;
+        preview.style.display = 'block';
+        photoArea.classList.add('has-photo');
+        
+        // Mostrar na thumbnail
+        const thumbPhoto = document.getElementById('artistPhoto');
+        thumbPhoto.src = artistPhotoData;
+        thumbPhoto.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeArtistPhoto() {
+    artistPhotoData = null;
+    
+    const photoArea = document.getElementById('photoArea');
+    const placeholder = document.getElementById('photoPlaceholder');
+    const preview = document.getElementById('photoPreview');
+    const thumbPhoto = document.getElementById('artistPhoto');
+    
+    placeholder.style.display = 'block';
+    preview.style.display = 'none';
+    preview.src = '';
+    thumbPhoto.style.display = 'none';
+    thumbPhoto.src = '';
+    photoArea.classList.remove('has-photo');
+    
+    document.getElementById('artistPhotoInput').value = '';
+}
+
+// =============================================
+// FUNÇÃO AUXILIAR
+// =============================================
+function updatePreview() {
+    updateThumbnail();
+}
+
+
 // CONTROLE DOS TEMAS
 // =============================================
 let currentTheme = 'theme-lofi';
@@ -1104,6 +1380,7 @@ function resetDefaults() {
     document.getElementById('subtitleInput').value = 'lofi hip hop radio • beats to relax';
     document.getElementById('fontSize').value = 48;
     document.getElementById('subtitleSize').value = 20;
+    document.getElementById('channelName').value = '@fjustuss';
     
     updateThumbnail();
     updateFontSize(48);
@@ -1114,6 +1391,9 @@ function resetDefaults() {
     
     // Reseta posição
     setPosition('center');
+    
+    // Remove foto do artista
+    removeArtistPhoto();
     
     // Desativa drag se estiver ativo
     if (dragMode) toggleDrag();
@@ -1271,19 +1551,33 @@ function downloadThumbnail() {
     const preview = document.getElementById('previewContent');
     const title = document.getElementById('previewTitle').textContent;
     const subtitle = document.getElementById('previewSubtitle').textContent;
+    const channelName = document.getElementById('channelName').value || '@fjustuss';
     
     // Limpa canvas
     ctx.clearRect(0, 0, 1280, 720);
     
-    // Background
-    const style = window.getComputedStyle(preview);
+    // Aplicar tema ao canvas
+    const themeClass = currentTheme;
+    const bgColors = {
+        'theme-lofi': ['#2d1b69', '#1a1a2e', '#0f0f1a'],
+        'theme-synthwave': ['#1a0b2e', '#2d0a31', '#0f0514'],
+        'theme-vaporwave': ['#ff6ad5', '#c774e8', '#94b0ff'],
+        'theme-dark-academia': ['#2c2c2c', '#1a1a1a', '#0f0f0f'],
+        'theme-neon-night': ['#0a0a0a', '#1a0033', '#0a0011'],
+        'theme-midnight-jazz': ['#1a1a3e', '#2e1a47', '#1a0b2e'],
+        'theme-the-voice': ['#0a0a1a', '#1a0a2e', '#0f0f1a'],
+        'theme-trap-gospel': ['#0f0f1f', '#1a0a3e', '#0a1a2e']
+    };
+    const colors = bgColors[themeClass] || ['#1a1a2e', '#16213e', '#0f0f1a'];
+    
     const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
-    gradient.addColorStop(0, '#2d1b69');
-    gradient.addColorStop(1, '#0f0f1a');
+    gradient.addColorStop(0, colors[0]);
+    gradient.addColorStop(0.5, colors[1]);
+    gradient.addColorStop(1, colors[2]);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1280, 720);
     
-    // Efeitos/blurs decorativos
+    // Efeitos decorativos
     ctx.fillStyle = 'rgba(255, 150, 100, 0.1)';
     ctx.beginPath();
     ctx.arc(800, 150, 200, 0, Math.PI * 2);
@@ -1294,17 +1588,29 @@ function downloadThumbnail() {
     ctx.arc(200, 600, 250, 0, Math.PI * 2);
     ctx.fill();
     
-    // Emoji decorativo (sutil)
-    ctx.font = '200px Arial';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-    ctx.textAlign = 'center';
-    ctx.fillText('🎵', 100, 200);
+    // Foto do artista (se existir)
+    if (artistPhotoData) {
+        const img = new Image();
+        img.src = artistPhotoData;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(80, 200, 280, 280, 16);
+        ctx.clip();
+        ctx.drawImage(img, 80, 200, 280, 280);
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.roundRect(80, 200, 280, 280, 16);
+        ctx.stroke();
+    }
     
     // Título
+    const titleColor = document.getElementById('previewTitle').style.color || '#ffd6cc';
     ctx.font = 'bold 90px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd6cc';
-    ctx.shadowColor = 'rgba(255, 150, 100, 0.5)';
+    ctx.fillStyle = titleColor;
+    ctx.shadowColor = titleColor + '66';
     ctx.shadowBlur = 30;
     ctx.fillText(title, 640, 340);
     ctx.shadowBlur = 0;
@@ -1314,22 +1620,39 @@ function downloadThumbnail() {
     ctx.fillStyle = 'rgba(255, 153, 170, 0.9)';
     ctx.fillText(subtitle, 640, 400);
     
+    // WATERMARK - Nome do canal (canto inferior direito)
+    ctx.font = '22px "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(channelName, 1240, 690);
+    ctx.shadowBlur = 0;
+    
+    // Barra sutil no canto inferior
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fillRect(1240 - ctx.measureText(channelName).width - 20, 665, ctx.measureText(channelName).width + 30, 4);
+    ctx.shadowBlur = 0;
+    
+    // Nome do arquivo com o título e canal
+    const fileName = title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/--+/g, '-').slice(0, 30) + '_' + channelName.replace('@', '') + '_thumbnail.png';
+    
     // Download
     const link = document.createElement('a');
-    link.download = `thumbnail-${Date.now()}.png`;
+    link.download = fileName;
     link.href = canvas.toDataURL('image/png');
     link.click();
     
     // Feedback visual
     const btn = document.querySelector('.btn-primary');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '✅ Download iniciado!';
+    btn.innerHTML = '✅ Download: ' + fileName;
     btn.style.background = 'linear-gradient(135deg, #00ff88, #00aa55)';
     
     setTimeout(() => {
         btn.innerHTML = originalText;
         btn.style.background = '';
-    }, 2000);
+    }, 3000);
 }
 
 // =============================================

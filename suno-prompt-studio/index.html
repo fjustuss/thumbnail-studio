@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suno Prompt Studio</title>
+    <title>Suno Prompt Studio AI</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -13,6 +13,8 @@
             --accent-blue-hover: #2563eb;
             --accent-gold: #fbbf24;
             --accent-gold-hover: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-purple-hover: #7c3aed;
             --border-color: #333;
         }
 
@@ -40,7 +42,7 @@
         h1 {
             text-align: center;
             margin-top: 0;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-gold));
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -71,6 +73,21 @@
             min-height: 100px;
         }
 
+        .api-settings {
+            background-color: #252525;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .api-settings p {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -81,21 +98,25 @@
             transition: all 0.2s;
             width: 100%;
             margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .btn-generate {
-            background-color: var(--accent-blue);
+            background-color: var(--accent-purple);
             color: white;
+            height: 50px;
         }
 
         .btn-generate:hover {
-            background-color: var(--accent-blue-hover);
+            background-color: var(--accent-purple-hover);
         }
 
         .btn-copy {
             background-color: #10b981;
             color: white;
-            display: none; /* Hidden until generated */
+            display: none;
         }
         
         .btn-copy:hover {
@@ -104,7 +125,7 @@
 
         .result-container {
             margin-top: 30px;
-            display: none; /* Hidden until generated */
+            display: none;
         }
 
         .result-box {
@@ -117,6 +138,7 @@
             margin-bottom: 15px;
             max-height: 400px;
             overflow-y: auto;
+            line-height: 1.5;
         }
         
         .section-title {
@@ -126,19 +148,42 @@
             letter-spacing: 1px;
             margin-bottom: 5px;
         }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🎧 Suno Prompt Studio</h1>
-        <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Gerador automático de prompts para IA Musical (v5.5 Ready)</p>
+        <h1>✨ Suno Prompt Studio AI</h1>
+        <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Gerador automático de letras e prompts integrados com IA</p>
+
+        <!-- API Settings -->
+        <div class="api-settings">
+            <label for="apiKey">🔑 Chave de API OpenAI (Opcional para autogeração):</label>
+            <input type="password" id="apiKey" placeholder="sk-...">
+            <p>Sua chave fica salva apenas no seu navegador (localStorage). Se deixado em branco, geraremos apenas o esqueleto.</p>
+        </div>
 
         <div class="form-group">
             <label for="channel">📺 Selecione o Canal:</label>
             <select id="channel">
-                <option value="spotlight">🎤 SpotlightTv (The Voice / AGT Style)</option>
-                <option value="enzo">⛪️ Enzo Barros (Trap Gospel)</option>
+                <option value="spotlight">🎤 SpotlightTv (The Voice / AGT Style) - Inglês</option>
+                <option value="enzo">⛪️ Enzo Barros (Trap Gospel) - Português</option>
             </select>
         </div>
 
@@ -148,11 +193,14 @@
         </div>
 
         <div class="form-group">
-            <label for="custom_lyrics">✍️ Letra (Opcional - Deixe em branco para o agente gerar ou cole a sua):</label>
-            <textarea id="custom_lyrics" placeholder="Cole sua letra aqui ou deixe em branco para ver o template estrutural com metatags."></textarea>
+            <label for="custom_lyrics">✍️ Letra Customizada (Opcional):</label>
+            <textarea id="custom_lyrics" placeholder="Se você preencher este campo, a IA NÃO gerará uma nova letra, apenas usará a sua."></textarea>
         </div>
 
-        <button class="btn btn-generate" onclick="generatePrompt()">🚀 Gerar Prompt Suno</button>
+        <button class="btn btn-generate" id="generateBtn" onclick="generatePrompt()">
+            <div class="spinner" id="spinner"></div>
+            <span id="btnText">🚀 Gerar Música com IA</span>
+        </button>
 
         <div class="result-container" id="resultContainer">
             <h3>Seu Prompt está pronto!</h3>
@@ -168,91 +216,135 @@
     </div>
 
     <script>
+        // Load API Key on startup
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedKey = localStorage.getItem("openai_api_key");
+            if (savedKey) {
+                document.getElementById("apiKey").value = savedKey;
+            }
+        });
+
         const profiles = {
             spotlight: {
                 style: "Emotional cinematic pop ballad, powerful vocal performance, building tension, intimate start to epic orchestral climax, live stage feel, stadium acoustics, standing ovation energy, English lyrics, live talent show audition. Female powerhouse vocalist with slight rasp.",
-                template: `[Intro] 
-[Live audience murmur fading]
-[Sparse piano]
-
-[Verse 1] 
-[Intimate] [Breathy] [Vulnerable]
-(Escreva sobre o início tímido e o tema: {theme})
-
-[Pre-Chorus] 
-[Building Energy] [Strings swelling]
-
-[Chorus] 
-[Powerful] [Belted] [Emotional]
-(O grande clímax da música)
-
-[Verse 2] 
-[Confident] [Steady rhythm]
-
-[Bridge] 
-[Emotional Climax] [Orchestral Swell] [Vocal Run]
-
-[Chorus] 
-[Explosive] [Full Belting] [High Note]
-
-[Outro] 
-[Vocal fading out] [Piano resolving]
-[Live Applause] [Cheering crowd]
-[End]`
+                language: "Inglês",
+                vibe: "emocionante, de superação, auditório de reality show (começa tímida e explode num refrão poderoso)",
+                template: `[Intro] \n[Live audience murmur fading]\n[Sparse piano]\n\n[Verse 1] \n[Intimate] [Breathy] [Vulnerable]\n(Escreva sobre o início tímido e o tema: {theme})\n\n[Pre-Chorus] \n[Building Energy] [Strings swelling]\n\n[Chorus] \n[Powerful] [Belted] [Emotional]\n(O grande clímax da música)\n\n[Verse 2] \n[Confident] [Steady rhythm]\n\n[Bridge] \n[Emotional Climax] [Orchestral Swell] [Vocal Run]\n\n[Chorus] \n[Explosive] [Full Belting] [High Note]\n\n[Outro] \n[Vocal fading out] [Piano resolving]\n[Live Applause] [Cheering crowd]\n[End]`
             },
             enzo: {
                 style: "Brazilian trap gospel, heavy 808 bass, crisp hi-hats, urban hip-hop beat, atmospheric synth pads, modern rap flow, melodic trap, 90 bpm, autotune. Male rapper with dynamic flow, transitioning between rhythmic spoken delivery and melodic choruses.",
-                template: `[Intro] 
-[Atmospheric synth] [Beat drop]
-Yeah, Enzo Barros.
-(Ad-libs sobre o tema: {theme})
-
-[Verse 1] 
-[Fast rap flow] [Heavy 808 bass]
-(Verso rápido focado na vivência e superação)
-
-[Chorus] 
-[Melodic trap] [Harmonized] [Autotune]
-(Refrão melódico e marcante com a mensagem de fé)
-
-[Verse 2] 
-[Aggressive delivery] [Rhythmic]
-
-[Chorus] 
-[High energy] [Explosive drop]
-
-[Outro] 
-[Fading beat] [Spoken word]
-(Mensagem final falada)
-[End]`
+                language: "Português (Brasil), com gírias de trap",
+                vibe: "testemunho, fé cristã, superação urbana, ritmo acelerado nos versos e refrão melódico",
+                template: `[Intro] \n[Atmospheric synth] [Beat drop]\nYeah, Enzo Barros.\n(Ad-libs sobre o tema: {theme})\n\n[Verse 1] \n[Fast rap flow] [Heavy 808 bass]\n(Verso rápido focado na vivência e superação)\n\n[Chorus] \n[Melodic trap] [Harmonized] [Autotune]\n(Refrão melódico e marcante com a mensagem de fé)\n\n[Verse 2] \n[Aggressive delivery] [Rhythmic]\n\n[Chorus] \n[High energy] [Explosive drop]\n\n[Outro] \n[Fading beat] [Spoken word]\n(Mensagem final falada)\n[End]`
             }
         };
 
-        function generatePrompt() {
+        async function generatePrompt() {
             const channel = document.getElementById('channel').value;
             const theme = document.getElementById('theme').value || "Tema livre";
             const customLyrics = document.getElementById('custom_lyrics').value;
+            const apiKeyInput = document.getElementById('apiKey').value.trim();
 
             const profile = profiles[channel];
             
-            // Set Style
+            // Save API key
+            if (apiKeyInput) {
+                localStorage.setItem("openai_api_key", apiKeyInput);
+            }
+
+            // Set Style immediately
             document.getElementById('styleBox').textContent = profile.style;
 
-            // Set Lyrics
-            let finalLyrics = "";
+            // Scenario 1: User provided custom lyrics
             if (customLyrics.trim() !== "") {
-                finalLyrics = customLyrics; // If user provided lyrics, just use them (maybe we could inject tags later, but keep it simple for now)
-            } else {
-                finalLyrics = profile.template.replace('{theme}', theme).replace('{theme}', theme);
+                document.getElementById('lyricsBox').textContent = customLyrics;
+                showResults();
+                return;
             }
-            
-            document.getElementById('lyricsBox').textContent = finalLyrics;
 
-            // Show results
+            // Scenario 2: No API Key (fallback to template)
+            if (!apiKeyInput) {
+                document.getElementById('lyricsBox').textContent = profile.template.replace(/\{theme\}/g, theme);
+                showResults();
+                return;
+            }
+
+            // Scenario 3: AI Generation!
+            setLoading(true);
+
+            const systemPrompt = `Você é um compositor musical expert em prompts para o Suno AI v5.5.
+O usuário quer uma música para o canal: ${channel}.
+Idioma obrigatório: ${profile.language}.
+Vibe: ${profile.vibe}.
+
+Você deve gerar a LETRA COMPLETA usando EXATAMENTE ESTA ESTRUTURA de metatags:
+${profile.template}
+
+Regras:
+1. Substitua as instruções em parênteses (ex: (Verso rápido...)) pela letra real rimada.
+2. MANTENHA as metatags em colchetes [Exemplo] exatamente onde estão no template.
+3. Não adicione texto extra, devolva apenas a letra finalizada pronta para o Suno.`;
+
+            const userMessage = `Tema da música: ${theme}`;
+
+            try {
+                const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKeyInput}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userMessage }
+                        ],
+                        temperature: 0.7
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Erro na API: " + response.status);
+                }
+
+                const data = await response.json();
+                const aiLyrics = data.choices[0].message.content.trim();
+                
+                document.getElementById('lyricsBox').textContent = aiLyrics;
+                showResults();
+            } catch (error) {
+                alert("Erro ao gerar letra com IA: " + error.message + "\n\nCaindo para o modo manual (template).");
+                document.getElementById('lyricsBox').textContent = profile.template.replace(/\{theme\}/g, theme);
+                showResults();
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function showResults() {
             document.getElementById('resultContainer').style.display = 'block';
-            
-            // Scroll down
-            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function setLoading(isLoading) {
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('spinner');
+            const btnText = document.getElementById('btnText');
+
+            if (isLoading) {
+                btn.disabled = true;
+                spinner.style.display = 'block';
+                btnText.innerText = "Escrevendo letra...";
+                btn.style.backgroundColor = "#555";
+            } else {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+                btnText.innerText = "🚀 Gerar Música com IA";
+                btn.style.backgroundColor = "var(--accent-purple)";
+            }
         }
 
         function copyToClipboard(elementId, btnElement) {
